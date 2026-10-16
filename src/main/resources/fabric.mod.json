@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "crafthistory",
+  "version": "${version}",
+  "name": "Craft History",
+  "description": "Adds a Craft History section to the vanilla recipe book. It remembers your three most recent crafts so you can place them again with a single click (Shift-click for the maximum), and pressing Space re-fills the previous recipe so you can keep crafting.",
+  "authors": [
+    "Craft History"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/crafthistory/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.crafthistory.CraftHistoryMod"
+    ]
+  },
+  "mixins": [
+    "crafthistory.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=21"
+  }
+}

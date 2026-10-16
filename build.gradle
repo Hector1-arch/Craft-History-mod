@@ -1,0 +1,72 @@
+plugins {
+    id "fabric-loom" version "1.11-SNAPSHOT"
+    id "maven-publish"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    // Minecraft 26.3 ships unobfuscated (official names == Fabric intermediary), so Fabric's
+    // intermediary mapping for it is an empty identity mapping. The published POM for that
+    // artifact is a broken placeholder (version 0.0.0), so resolve it without module metadata.
+    maven {
+        name = "FabricIntermediary"
+        url = "https://maven.fabricmc.net/"
+        content { includeModule("net.fabricmc", "intermediary") }
+        metadataSources { artifact() }
+    }
+    maven { url = "https://maven.fabricmc.net/" }
+    mavenCentral()
+}
+
+loom {
+    // 26.3 is not obfuscated, so there is no intermediate (intermediary) namespace to remap to.
+    noIntermediateMappings()
+    mixin {
+        // The legacy Mixin annotation processor tries to validate @Inject/@Shadow/@Accessor targets
+        // against an obfuscation mapping. Because 26.3 is unobfuscated (identity mappings) there is
+        // no obf data to find, which the processor treats as a hard error. Loom's modern (non-legacy)
+        // mixin handling remaps mixin references at remap time instead, which is a no-op for the
+        // identity mappings used here, so disable the legacy AP.
+        useLegacyMixinAp = false
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // Identity mappings: intermediary -> named (see mappings/intermediary-to-named.tiny).
+    // Combined with the NoOp intermediate provider above (official -> intermediary) this yields
+    // the full identity chain official -> intermediary -> named for the unobfuscated 26.3 jar.
+    mappings loom.layered() {
+        mappings(file("mappings/intermediary-to-named.tiny"))
+    }
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
